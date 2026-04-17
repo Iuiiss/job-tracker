@@ -1,0 +1,20 @@
+# Environment variables (contains Firebase secrets)
+.env
+
+# Build output
+dist/
+
+# Firebase SDK local copies (loaded from CDN in production)
+# Keeping these in repo is fine for extension offline use, but not needed in dist
+# Actually we do need them in dist because the extension loads them from local paths.
+# So we should keep them, but they are already in repo. No problem.
+
+# Node modules (none currently)
+node_modules/
+
+# OS files
+.DS_Store
+
+# IDE
+.vscode/
+.idea/

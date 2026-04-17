@@ -18,14 +18,14 @@ const BrowserCompat = (() => {
   const browser = getBrowser();
   console.log("[JobBoard] Detected browser:", browser);
 
-  // Firebase configuration
+  // Firebase configuration - replaced at build time via GitHub Actions secrets
   const firebaseConfig = {
-    apiKey: "AIzaSyCvJl9E6FvzqlO-r0eoIH_tZ38u-uRQ8II",
-    authDomain: "job-tracker-a4481.firebaseapp.com",
-    projectId: "job-tracker-a4481",
-    storageBucket: "job-tracker-a4481.firebasestorage.app",
-    messagingSenderId: "706534879668",
-    appId: "1:706534879668:web:1fedadee20b36ae44882e1"
+    apiKey: "{{FIREBASE_API_KEY}}",
+    authDomain: "{{FIREBASE_AUTH_DOMAIN}}",
+    projectId: "{{FIREBASE_PROJECT_ID}}",
+    storageBucket: "{{FIREBASE_STORAGE_BUCKET}}",
+    messagingSenderId: "{{FIREBASE_MESSAGING_SENDER_ID}}",
+    appId: "{{FIREBASE_APP_ID}}"
   };
 
   // Initialize Firebase (check if already initialized)

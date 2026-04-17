@@ -5,52 +5,110 @@ Saved jobs appear instantly in your index.html Kanban tracker.
 
 **Now supports both Chrome and Safari!** 🎉
 
-## Installation
+## 🔐 Firebase Setup (Required)
 
-### Chrome 
+This extension uses Firebase Firestore to sync jobs across devices. You need to:
 
-1. Open Chrome and go to: chrome://extensions
-2. Turn on "Developer mode" (toggle in the top right)
-3. Click "Load unpacked"
-4. Select this folder (job_tracker_extension)
-5. The JobBoard icon will appear in your Chrome toolbar
+1. **Create a Firebase project**
+   - Go to [Firebase Console](https://console.firebase.google.com/)
+   - Click "Add project" → enter a name → disable Analytics (optional) → Create
 
-### Safari 
+2. **Enable Firestore**
+   - In the sidebar: Build → Firestore Database
+   - Click "Create database"
+   - Pick a location, select **Test mode** → Create
 
-1. Open Safari
-2. Go to **Safari menu → Settings**
-3. Activate web developer tools in settings under **Advanced**
-4. Go to **Developer** and check the **Allow unsigned extensions**
-5. Click on **Add temporary Extension**
-4. Navigate to this folder and select it
-5. Grant the required permissions when prompted
-6. The JobBoard extension will appear in your Safari toolbar
+3. **Register a Web App**
+   - In project settings, click the `</>` Web icon
+   - Nickname: "jobtracker-web"
+   - Copy the `firebaseConfig` object
 
+4. **Add your Firebase config to the project:**
 
-## How to use
+   **Local development:**
+   ```bash
+   cp .env.example .env
+   # Edit .env and paste your firebaseConfig values
+   ```
 
-1. Go to any LinkedIn or Indeed job listing
-2. Look for the "⭐ Save to JobBoard" button near the job title
-3. Click it — the job is saved with status "Wishlist"
-4. Open your index.html tracker to see it on the Kanban board
-5. Drag it to the right column (Applied, Interview, etc.)
+   **GitHub deployment (keep secrets out of repo):**
+   - Go to your GitHub repo → Settings → Secrets and variables → Actions
+   - Add these secrets (values from your firebaseConfig):
+     - `FIREBASE_API_KEY`
+     - `FIREBASE_AUTH_DOMAIN`
+     - `FIREBASE_PROJECT_ID`
+     - `FIREBASE_STORAGE_BUCKET`
+     - `FIREBASE_MESSAGING_SENDER_ID`
+     - `FIREBASE_APP_ID`
 
-## Cross-browser support
+5. **Set Firestore Security Rules** (allow read/write for now)
+   ```
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /{document=**} {
+         allow read, write: if true;
+       }
+     }
+   }
+   ```
 
-This extension now uses a **browser compatibility layer** (`browser-compat.js`) that automatically detects whether you're using Chrome or Safari and uses the appropriate APIs. No configuration needed—it just works on both!
+6. **Set Firestore location** (must match your project's location)
+   - In your Firebase config from step 3, check `projectId` and other values.
+   - Use those exact values in your secrets.
 
-The compatibility layer handles:
-- **Storage**: Chrome uses `chrome.storage.local`, Safari uses `localStorage`
-- **Tab opening**: Each browser has its own mechanism
-- **Browser detection**: Automatic detection with console logging for debugging
+5. **Build and deploy locally**
+   ```bash
+   node scripts/build.js
+   ```
+   This generates a `dist/` folder with your secrets injected.
 
-## Files
+   - **Load extension from `dist/`** (Chrome: chrome://extensions → Load unpacked → select `dist/`)
+   - **Open tracker**: open `dist/index.html` in browser, or push `dist/` to GitHub Pages
 
-- `manifest.json`  — tells the browser about the extension and its permissions
-- `browser-compat.js` — cross-browser compatibility layer (detects Chrome vs Safari)
-- `content.js`     — injected into LinkedIn/Indeed, reads job data + adds button
-- `popup.html`     — the UI shown when you click the extension icon
-- `popup.js`       — logic for the popup (reads saved jobs, opens tracker)
-- `index.html`     — Kanban board for tracking jobs
-- `icon.png`       — extension icon
-# job-tracker
+## 🚀 Deployment
+
+### Automatic (GitHub Actions)
+Push to `main` branch → GitHub Actions builds and deploys to GitHub Pages automatically.
+
+### Manual
+```bash
+node scripts/build.js
+# dist/ folder is ready
+# Upload dist/ contents to your GitHub Pages hosting (gh-pages branch or /docs folder)
+```
+
+## 🔧 Development
+
+- **Source files** (with `{{FIREBASE_...}}` placeholders) are in the root
+- Built files (with real secrets) are in `dist/` (gitignored)
+- Run `node scripts/build.js` after changing source files to test locally
+- Load the extension from `dist/` folder to test in browser
+
+## 🛠️ Firestore Rules Warning
+
+If you see `BooleanExpression` warnings in console, your Firestore rules are too restrictive. Set them to:
+```javascript
+allow read, write: if true;
+```
+(For production, you'll want proper auth rules.)
+
+## 📦 Files
+
+- `manifest.json` — extension manifest
+- `browser-compat.js` — unified Chrome/Safari API + Firebase Firestore wrapper
+- `content.js` — injected into LinkedIn/Indeed to extract job data and add save button
+- `popup.html/js` — extension popup UI (stats, export, clear local storage)
+- `index.html` — main Kanban tracker (reads from Firestore)
+- `scripts/build.js` — build script that injects Firebase secrets
+- `firebase-app-compat.js` — Firebase SDK (local copy for extension)
+- `firebase-firestore-compat.js` — Firestore SDK (local copy)
+
+## 🎯 Usage
+
+1. Visit a LinkedIn orIndeed job page
+2. Click **⭐ Save to JobBoard**
+3. Open your tracker (index.html) — job appears in **Wishlist**
+4. Drag job to **Applied**, **Interview**, **Offer**, or **Rejected**
+
+The popup shows stats and lets you export/clear local storage.

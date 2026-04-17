@@ -5,13 +5,8 @@
 // Reads saved jobs from Firestore and displays stats.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// LOAD STATS
-// Read jobs from Firestore and update stats (real-time sync)
-// ═══════════════════════════════════════════════════════════════════════════════
-
+// Load stats from Firestore (with localStorage fallback)
 function loadStats() {
-  // Try Firestore first
   if (typeof firebase !== "undefined" && firebase.apps && firebase.apps.length > 0) {
     try {
       const db = firebase.firestore();
@@ -21,7 +16,7 @@ function loadStats() {
           updateStats(jobs);
         })
         .catch(err => {
-          console.warn("[JobBoard] Firestore error, using localStorage:", err);
+          console.warn("[JobBoard] Firestore error, falling back to localStorage:", err);
           fallbackLoadStats();
         });
     } catch (e) {
@@ -49,7 +44,7 @@ function updateStats(jobs) {
 // Load on startup
 loadStats();
 
-// Refresh every 2 seconds to stay in sync
+// Refresh every 2 seconds to stay in sync with Firestore
 setInterval(loadStats, 2000);
 
 // ── Open tracker button ────────────────────────────────────────────────────
@@ -71,4 +66,18 @@ document.getElementById("export-btn").addEventListener("click", () => {
     link.click();
     URL.revokeObjectURL(url);
   });
+});
+
+// ── Clear localStorage button ─────────────────────────────────────────────
+// Clears the extension's local storage (not Firebase). Use this when you have
+// old jobs in localStorage that aren't in Firestore, causing "Already saved"
+// duplicates when re-adding them.
+document.getElementById("clear-local-btn").addEventListener("click", () => {
+  if (confirm("Clear local storage?\n\nThis will NOT delete jobs from Firebase.\nUse this to fix 'Already saved' errors for old jobs that aren't on the website.")) {
+    BrowserCompat.storageSet("jobtracker_jobs", [], () => {
+      localStorage.removeItem("jobtracker_jobs");
+      // Refresh stats immediately
+      loadStats();
+    });
+  }
 });
