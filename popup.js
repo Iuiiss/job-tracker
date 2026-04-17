@@ -2,32 +2,63 @@
 // popup.js
 //
 // Runs inside the extension popup when you click the toolbar icon.
-// Reads saved jobs from storage and displays them.
-// Uses BrowserCompat for cross-browser support (Chrome and Safari).
+// Reads saved jobs from Firestore and displays stats.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Read jobs using cross-browser storage API
-BrowserCompat.storageGet("jobtracker_jobs", (jobs) => {
-  jobs = jobs || [];
+// ═══════════════════════════════════════════════════════════════════════════════
+// LOAD STATS
+// Read jobs from Firestore and update stats (real-time sync)
+// ═══════════════════════════════════════════════════════════════════════════════
 
-  // ── Stats ──────────────────────────────────────────────────────────────────
+function loadStats() {
+  // Try Firestore first
+  if (typeof firebase !== "undefined" && firebase.apps && firebase.apps.length > 0) {
+    try {
+      const db = firebase.firestore();
+      db.collection("jobs").get()
+        .then(snapshot => {
+          const jobs = snapshot.docs.map(doc => doc.data());
+          updateStats(jobs);
+        })
+        .catch(err => {
+          console.warn("[JobBoard] Firestore error, using localStorage:", err);
+          fallbackLoadStats();
+        });
+    } catch (e) {
+      fallbackLoadStats();
+    }
+  } else {
+    fallbackLoadStats();
+  }
+}
+
+function fallbackLoadStats() {
+  BrowserCompat.storageGet("jobtracker_jobs", (jobs) => {
+    jobs = jobs || [];
+    updateStats(jobs);
+  });
+}
+
+function updateStats(jobs) {
   document.getElementById("stat-total").textContent = jobs.length;
-  document.getElementById("stat-interviews").textContent =
-    jobs.filter(j => j.status === "interview").length;
-  document.getElementById("stat-offers").textContent =
-    jobs.filter(j => j.status === "offer").length;
-});
+  document.getElementById("stat-applied").textContent = jobs.filter(j => j.status === "applied").length;
+  document.getElementById("stat-interviews").textContent = jobs.filter(j => j.status === "interview").length;
+  document.getElementById("stat-offers").textContent = jobs.filter(j => j.status === "offer").length;
+}
+
+// Load on startup
+loadStats();
+
+// Refresh every 2 seconds to stay in sync
+setInterval(loadStats, 2000);
 
 // ── Open tracker button ────────────────────────────────────────────────────
-// When clicked, opens your index.html tracker in a new tab.
-// Uses BrowserCompat to handle both Chrome and Safari.
 document.getElementById("open-btn").addEventListener("click", () => {
   const trackerUrl = "https://iuiiss.github.io/job-tracker/index.html";
   BrowserCompat.openTab(trackerUrl);
 });
 
-// ── Export jobs button ──────────────────────────────────────────────────
-// Export all saved jobs as a JSON file that can be imported into the tracker
+// ── Export jobs button ────────────────────────────────────────────────────
 document.getElementById("export-btn").addEventListener("click", () => {
   BrowserCompat.storageGet("jobtracker_jobs", (jobs) => {
     jobs = jobs || [];
@@ -42,30 +73,15 @@ document.getElementById("export-btn").addEventListener("click", () => {
   });
 });
 
-// ── Clear jobs button ──────────────────────────────────────────────────
-// Clear all saved jobs from both storage and Firestore
+// ── Clear jobs button ─────────────────────────────────────────────────────
 document.getElementById("clear-btn").addEventListener("click", () => {
   if (confirm("Delete all saved jobs? This cannot be undone.")) {
-    // Clear both storage systems
     BrowserCompat.storageSet("jobtracker_jobs", [], () => {
       localStorage.removeItem("jobtracker_jobs");
-      
-      // Also clear Firestore
       BrowserCompat.firestoreClearAll(() => {
-        console.log("[JobBoard] Firestore clear complete");
+        console.log("[JobBoard] Cleared all jobs");
+        loadStats(); // Refresh stats immediately
       });
-      
-      // Update UI directly to show cleared state
-      document.getElementById("stat-total").textContent = "0";
-      document.getElementById("stat-interviews").textContent = "0";
-      document.getElementById("stat-offers").textContent = "0";
-      
-      const list = document.getElementById("jobs-list");
-      list.innerHTML = '<div class="empty">No jobs saved yet.<br>Visit LinkedIn or Indeed to get started.</div>';
     });
   }
 });
-
-function capitalize(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
