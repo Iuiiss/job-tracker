@@ -52,14 +52,9 @@ The extension is ready to use! Follow these steps to deploy the tracker to GitHu
    - Under "Build and deployment", set Source to "Deploy from a branch"
    - Select `main` branch
    - Click Save
-
-4. **Update popup.js:**
-   - Already configured! The URL is set to:
-   ```javascript
-   const trackerUrl = "https://luiiss.github.io/job-tracker/index.html";
    ```
 
-5. **Reload the extension:**
+4. **Reload the extension:**
    - Chrome: Go to `chrome://extensions` and click the refresh icon
    - Safari: Settings → Extensions → reload
 
