@@ -36,7 +36,12 @@
         "https://www.indeed.com/viewjob*",
         "https://www.indeed.com/jobs*"
       ],
-      "js": ["browser-compat.js", "content.js"],
+      "js": [
+        "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js",
+        "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js",
+        "browser-compat.js",
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ]

@@ -18,8 +18,10 @@ Saved jobs appear instantly in your index.html Kanban tracker.
 ### Safari 
 
 1. Open Safari
-2. Go to **Safari menu → Settings → Extensions** (or Preferences on older macOS)
-3. Click the **+** button and select "Add Extension"
+2. Go to **Safari menu → Settings**
+3. Activate web developer tools in settings under **Advanced**
+4. Go to **Developer** and check the **Allow unsigned extensions**
+5. Click on **Add temporary Extension**
 4. Navigate to this folder and select it
 5. Grant the required permissions when prompted
 6. The JobBoard extension will appear in your Safari toolbar

@@ -2,11 +2,10 @@
 // browser-compat.js
 //
 // Cross-browser compatibility layer for Chrome and Safari extensions.
-// Detects the browser and provides unified APIs for storage and tab operations.
+// Detects the browser and provides unified APIs for storage, Firestore, and tab operations.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const BrowserCompat = (() => {
-  // Detect which browser we're running in
   const getBrowser = () => {
     if (typeof chrome !== "undefined" && chrome.runtime) {
       return "chrome";
@@ -19,25 +18,41 @@ const BrowserCompat = (() => {
   const browser = getBrowser();
   console.log("[JobBoard] Detected browser:", browser);
 
+  // Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyCvJl9E6FvzqlO-r0eoIH_tZ38u-uRQ8II",
+    authDomain: "job-tracker-a4481.firebaseapp.com",
+    projectId: "job-tracker-a4481",
+    storageBucket: "job-tracker-a4481.firebasestorage.app",
+    messagingSenderId: "706534879668",
+    appId: "1:706534879668:web:1fedadee20b36ae44882e1"
+  };
+
+  // Initialize Firebase (check if already initialized)
+  let db = null;
+  try {
+    if (typeof firebase !== "undefined" && firebase.apps.length === 0) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    if (typeof firebase !== "undefined") {
+      db = firebase.firestore();
+    }
+  } catch (e) {
+    console.warn("[JobBoard] Firebase init failed:", e);
+  }
+
   return {
-    /**
-     * Get the current browser type: "chrome", "safari", or "unknown"
-     */
     getBrowser: () => browser,
 
     /**
-     * Read data from storage.
-     * @param {string} key - The storage key
-     * @param {function} callback - Called with (value) when done
+     * Read data from local storage.
      */
     storageGet: (key, callback) => {
       if (browser === "chrome") {
-        // Chrome: use chrome.storage.local
         chrome.storage.local.get(key, (result) => {
           callback(result[key]);
         });
       } else if (browser === "safari") {
-        // Safari: use localStorage
         const value = localStorage.getItem(key);
         callback(value ? JSON.parse(value) : undefined);
       } else {
@@ -46,40 +61,106 @@ const BrowserCompat = (() => {
     },
 
     /**
-     * Write data to storage.
-     * @param {string} key - The storage key
-     * @param {any} value - The value to store
-     * @param {function} callback - Optional callback when done
+     * Write data to local storage.
      */
     storageSet: (key, value, callback) => {
       if (browser === "chrome") {
-        // Chrome: use chrome.storage.local
         chrome.storage.local.set({ [key]: value }, () => {
           if (callback) callback();
         });
       } else if (browser === "safari") {
-        // Safari: use localStorage
         localStorage.setItem(key, JSON.stringify(value));
         if (callback) callback();
       }
     },
 
     /**
-     * Open a URL in a new tab/window.
-     * @param {string} url - The URL to open
+     * Save job to Firestore.
      */
+    firestoreSaveJob: (job, callback) => {
+      if (!db) {
+        console.warn("[JobBoard] Firestore not available");
+        if (callback) callback(false);
+        return;
+      }
+      db.collection("jobs").add(job)
+        .then(() => {
+          console.log("[JobBoard] Job saved to Firestore");
+          if (callback) callback(true);
+        })
+        .catch((error) => {
+          console.error("[JobBoard] Firestore error:", error);
+          if (callback) callback(false);
+        });
+    },
+
+    /**
+     * Get all jobs from Firestore.
+     */
+    firestoreGetJobs: (callback) => {
+      if (!db) {
+        console.warn("[JobBoard] Firestore not available");
+        if (callback) callback([]);
+        return;
+      }
+      db.collection("jobs").get()
+        .then((snapshot) => {
+          const jobs = [];
+          snapshot.forEach((doc) => {
+            jobs.push({ id: doc.id, ...doc.data() });
+          });
+          if (callback) callback(jobs);
+        })
+        .catch((error) => {
+          console.error("[JobBoard] Firestore error:", error);
+          if (callback) callback([]);
+        });
+    },
+
+    /**
+     * Update job status in Firestore.
+     */
+    firestoreUpdateJob: (jobId, updates, callback) => {
+      if (!db) {
+        console.warn("[JobBoard] Firestore not available");
+        if (callback) callback(false);
+        return;
+      }
+      db.collection("jobs").doc(jobId).update(updates)
+        .then(() => {
+          if (callback) callback(true);
+        })
+        .catch((error) => {
+          console.error("[JobBoard] Firestore update error:", error);
+          if (callback) callback(false);
+        });
+    },
+
+    /**
+     * Delete job from Firestore.
+     */
+    firestoreDeleteJob: (jobId, callback) => {
+      if (!db) {
+        console.warn("[JobBoard] Firestore not available");
+        if (callback) callback(false);
+        return;
+      }
+      db.collection("jobs").doc(jobId).delete()
+        .then(() => {
+          if (callback) callback(true);
+        })
+        .catch((error) => {
+          console.error("[JobBoard] Firestore delete error:", error);
+          if (callback) callback(false);
+        });
+    },
+
     openTab: (url) => {
       if (browser === "chrome") {
-        // Chrome: use chrome.tabs.create
         chrome.tabs.create({ url: url });
       } else if (browser === "safari") {
-        // Safari: use safari.application
         if (safari.application) {
           safari.application.activeBrowserWindow.openNewTab(true);
-          // Note: Safari doesn't support setting the URL directly in openNewTab,
-          // so we need to navigate to it. This is a limitation of Safari's API.
-          // As a workaround, the app will need to handle navigation differently.
-          // For now, we'll attempt to use a fallback.
           try {
             const newTab = safari.application.activeBrowserWindow.activeTab;
             if (newTab) {
@@ -87,7 +168,6 @@ const BrowserCompat = (() => {
             }
           } catch (e) {
             console.warn("[JobBoard] Could not set tab URL in Safari", e);
-            // Fallback: prompt user to navigate manually
             alert("JobBoard Tracker:\n\n" + url);
           }
         }

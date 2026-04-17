@@ -196,6 +196,9 @@ function saveJob(jobData, btn) {
     // Also keep localStorage in sync for index.html
     localStorage.setItem("jobtracker_jobs", JSON.stringify(existing));
 
+    // Save to Firestore
+    BrowserCompat.firestoreSaveJob(newJob);
+
     // Update the button to show success
     btn.innerText = "✓ Saved to JobBoard!";
     btn.style.background = "#34d399";
