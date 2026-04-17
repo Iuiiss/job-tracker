@@ -43,7 +43,7 @@ BrowserCompat.storageGet("jobtracker_jobs", (jobs) => {
 // When clicked, opens your index.html tracker in a new tab.
 // Uses BrowserCompat to handle both Chrome and Safari.
 document.getElementById("open-btn").addEventListener("click", () => {
-  const trackerUrl = "https://luiiss.github.io/job-tracker/index.html";
+  const trackerUrl = "https://iuiiss.github.io/job-tracker/index.html";
   BrowserCompat.openTab(trackerUrl);
 });
 
