@@ -7,7 +7,7 @@ Saved jobs appear instantly in your index.html Kanban tracker.
 
 ## Installation
 
-### Chrome (2 minutes)
+### Chrome 
 
 1. Open Chrome and go to: chrome://extensions
 2. Turn on "Developer mode" (toggle in the top right)
@@ -15,7 +15,7 @@ Saved jobs appear instantly in your index.html Kanban tracker.
 4. Select this folder (job_tracker_extension)
 5. The JobBoard icon will appear in your Chrome toolbar
 
-### Safari (requires macOS)
+### Safari 
 
 1. Open Safari
 2. Go to **Safari menu → Settings → Extensions** (or Preferences on older macOS)
@@ -24,39 +24,6 @@ Saved jobs appear instantly in your index.html Kanban tracker.
 5. Grant the required permissions when prompted
 6. The JobBoard extension will appear in your Safari toolbar
 
-## Setup
-
-The extension is ready to use! Follow these steps to deploy the tracker to GitHub Pages:
-
-### Deploy to GitHub Pages (Recommended)
-
-1. **Create a GitHub repository:**
-   - Go to https://github.com/new
-   - Name it `job-tracker` (or whatever you prefer)
-   - Click "Create repository"
-
-2. **Push this folder to GitHub:**
-   ```bash
-   cd /Users/luisleis/vsCode/jobTracker
-   git init
-   git add .
-   git commit -m "Initial commit"
-   git branch -M main
-   git remote add origin https://github.com/luiiss/job-tracker.git
-   git push -u origin main
-   ```
-
-3. **Enable GitHub Pages:**
-   - Go to your repo settings
-   - Scroll to "Pages" section
-   - Under "Build and deployment", set Source to "Deploy from a branch"
-   - Select `main` branch
-   - Click Save
-   ```
-
-4. **Reload the extension:**
-   - Chrome: Go to `chrome://extensions` and click the refresh icon
-   - Safari: Settings → Extensions → reload
 
 ## How to use
 
