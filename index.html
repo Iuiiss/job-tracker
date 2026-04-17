@@ -327,17 +327,28 @@
     // Try loading from Firestore first
     if (db) {
       try {
+        console.log("[JobBoard] Querying Firestore...");
         const snapshot = await db.collection("jobs").get();
-        jobs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log("[JobBoard] Firestore returned", snapshot.docs.length, "documents");
+        jobs = snapshot.docs.map(doc => {
+          const data = doc.data();
+          // Normalize: some old jobs might have 'title' instead of 'role'
+          if (!data.role && data.title) {
+            data.role = data.title;
+          }
+          return { id: doc.id, ...data };
+        });
         // Cache in localStorage for offline use
         localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
         console.log("[JobBoard] Loaded", jobs.length, "jobs from Firestore");
       } catch (e) {
-        console.warn("[JobBoard] Failed to load from Firestore, using localStorage:", e);
-        jobs = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        console.error("[JobBoard] Firestore query error:", e);
+        console.warn("[JobBoard] Falling back to localStorage");
+        jobs = normalizeJobs(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"));
       }
     } else {
-      jobs = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      console.warn("[JobBoard] Firebase db not initialized, using localStorage");
+      jobs = normalizeJobs(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"));
     }
     
     // Clear all job containers
@@ -388,18 +399,26 @@
   }
 
   function renderJob(job) {
-    const status = job.status || "wishlist";
-    const jobsContainer = document.querySelector(`.jobs[data-status="${status}"]`);
+    // Normalize: some old jobs might have 'title' instead of 'role'
+    if (!job.role && job.title) {
+      job.role = job.title;
+    }
     
-    if (!jobsContainer) return;
-
+    const status = (job.status || "wishlist").toLowerCase();
+    let jobsContainer = document.querySelector(`.jobs[data-status="${status}"]`);
+    
+    // If status doesn't match any column, default to wishlist
+    if (!jobsContainer) {
+      jobsContainer = document.querySelector('.jobs[data-status="wishlist"]');
+    }
+    
     const jobEl = document.createElement("div");
     jobEl.className = "job";
     jobEl.draggable = true;
     jobEl.dataset.jobId = job.id;
     jobEl.innerHTML = `
       <div class="job-company">${job.company || "Unknown"}</div>
-      <div class="job-role">${job.role || "Job Title"}</div>
+      <div class="job-role">${job.role || job.title || "Job Title"}</div>
       <div class="job-meta">
         ${job.salary ? `<span class="job-salary">💰 ${job.salary}</span>` : ""}
         ${job.source ? `<span class="job-source">${job.source}</span>` : ""}
@@ -428,6 +447,16 @@
     document.getElementById("applied").textContent = jobs.filter(j => j.status === "applied").length;
     document.getElementById("interviews").textContent = jobs.filter(j => j.status === "interview").length;
     document.getElementById("offers").textContent = jobs.filter(j => j.status === "offer").length;
+  }
+
+  // Normalize job data: ensure 'role' field exists (fallback to 'title' for old jobs)
+  function normalizeJobs(jobs) {
+    return jobs.map(job => {
+      if (!job.role && job.title) {
+        job.role = job.title;
+      }
+      return job;
+    });
   }
 
   // Handle drag over
