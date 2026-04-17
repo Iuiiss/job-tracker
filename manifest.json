@@ -17,7 +17,8 @@
 
   "host_permissions": [
     "https://www.linkedin.com/*",
-    "https://www.indeed.com/*"
+    "https://www.indeed.com/*",
+    "https://firestore.googleapis.com/*"
   ],
 
   "action": {
@@ -37,8 +38,8 @@
         "https://www.indeed.com/jobs*"
       ],
       "js": [
-        "https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js",
-        "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js",
+        "firebase-app-compat.js",
+        "firebase-firestore-compat.js",
         "browser-compat.js",
         "content.js"
       ],

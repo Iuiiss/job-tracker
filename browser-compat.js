@@ -83,7 +83,8 @@ const BrowserCompat = (() => {
         if (callback) callback(false);
         return;
       }
-      db.collection("jobs").add(job)
+      // Use job.id as the document ID so we can update/delete later
+      db.collection("jobs").doc(job.id).set(job)
         .then(() => {
           console.log("[JobBoard] Job saved to Firestore");
           if (callback) callback(true);
