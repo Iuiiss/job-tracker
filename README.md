@@ -89,3 +89,4 @@ The compatibility layer handles:
 - `popup.js`       — logic for the popup (reads saved jobs, opens tracker)
 - `index.html`     — Kanban board for tracking jobs
 - `icon.png`       — extension icon
+# job-tracker
