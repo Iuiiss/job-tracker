@@ -40,32 +40,45 @@ function handleLinkedIn() {
   // Avoid injecting the button twice if it already exists
   if (document.getElementById("jobboard-btn")) return;
 
-  // These selectors target the job detail panel on LinkedIn
-  const titleEl   = document.querySelector(".job-details-jobs-unified-top-card__job-title h1") ||
-                    document.querySelector(".jobs-unified-top-card__job-title h1");
-  const companyEl = document.querySelector(".job-details-jobs-unified-top-card__company-name a") ||
-                    document.querySelector(".jobs-unified-top-card__company-name");
-  const salaryEl  = document.querySelector(".job-details-jobs-unified-top-card__job-insight--highlight") ||
-                    document.querySelector(".jobs-unified-top-card__job-insight");
+  // LinkedIn heavily obfuscates class names, so we search by text content and structure
+  // Find all <p> elements and look for one that might be the job title
+  const allElements = document.querySelectorAll("p, h1, h2");
+  let titleEl = null;
+  let companyEl = null;
+  
+  // Search for job title by looking for paragraphs with specific text patterns
+  for (let el of allElements) {
+    const text = el.innerText.trim();
+    // Skip very short or very long text
+    if (text.length > 5 && text.length < 100 && !text.includes("\n")) {
+      // This might be a job title - we'll use heuristics
+      // Job titles typically don't contain special characters and are 2-5 words
+      if (/^[\w\s\-\/\(\),\.&]+$/.test(text) && text.split(" ").length <= 6) {
+        titleEl = el;
+        break;
+      }
+    }
+  }
+
+  // Find company by looking for links that point to company pages
+  const companyLinks = document.querySelectorAll('a[href*="/company/"]');
+  if (companyLinks.length > 0) {
+    companyEl = companyLinks[0];
+  }
 
   if (!titleEl || !companyEl) return; // Page hasn't loaded the job panel yet
 
   const jobData = {
     title:   titleEl.innerText.trim(),
     company: companyEl.innerText.trim(),
-    salary:  salaryEl ? salaryEl.innerText.trim().split("\n")[0] : "",
+    salary:  "", // LinkedIn salary info is less reliable, skip for now
     url:     window.location.href,
     date:    new Date().toISOString().split("T")[0],
     source:  "LinkedIn",
   };
 
-  // Find a good place to inject our button — right after the job title area
-  const insertTarget = document.querySelector(".job-details-jobs-unified-top-card__actions") ||
-                       document.querySelector(".jobs-unified-top-card__content--two-pane");
-
-  if (insertTarget) {
-    insertButton(insertTarget, jobData, "afterend");
-  }
+  // Insert button right after the title
+  insertButton(titleEl, jobData, "afterend");
 }
 
 
