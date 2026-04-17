@@ -72,16 +72,3 @@ document.getElementById("export-btn").addEventListener("click", () => {
     URL.revokeObjectURL(url);
   });
 });
-
-// ── Clear jobs button ─────────────────────────────────────────────────────
-document.getElementById("clear-btn").addEventListener("click", () => {
-  if (confirm("Delete all saved jobs? This cannot be undone.")) {
-    BrowserCompat.storageSet("jobtracker_jobs", [], () => {
-      localStorage.removeItem("jobtracker_jobs");
-      BrowserCompat.firestoreClearAll(() => {
-        console.log("[JobBoard] Cleared all jobs");
-        loadStats(); // Refresh stats immediately
-      });
-    });
-  }
-});
