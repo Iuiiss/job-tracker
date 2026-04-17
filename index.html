@@ -255,73 +255,24 @@
   } catch (e) {
     console.warn("[JobBoard] Firestore init failed:", e);
   }
-</script>
 
-<div class="container">
-  <h1>JobBoard Tracker</h1>
-  <p class="subtitle">Drag jobs between columns to update their status</p>
+  // Normalize job data: ensure 'role' field exists (fallback to 'title' for old jobs)
+  function normalizeJobs(jobs) {
+    return jobs.map(job => {
+      if (!job.role && job.title) {
+        job.role = job.title;
+      }
+      return job;
+    });
+  }
 
-  <div class="controls">
-    <button onclick="exportJobs()">📥 Export as JSON</button>
-    <input type="file" id="import-input" style="display: none;" onchange="importJobs(event)">
-    <button onclick="document.getElementById('import-input').click()">📤 Import from JSON</button>
-    <button class="btn-secondary" onclick="clearAllJobs()">🗑️ Clear All</button>
-    <button class="btn-secondary" onclick="syncLocalStorageToFirestore()">☁️ Sync to Cloud</button>
-  </div>
+  // Load and render jobs on page load
+  document.addEventListener("DOMContentLoaded", () => {
+    loadAndRenderJobs();
+    // Refresh every 2 seconds to catch updates from the extension
+    setInterval(loadAndRenderJobs, 2000);
+  });
 
-  <div class="board">
-    <div class="column">
-      <div class="column-title">⭐ Wishlist</div>
-      <div class="jobs" data-status="wishlist"></div>
-      <div class="empty">Drag jobs here</div>
-    </div>
-
-    <div class="column">
-      <div class="column-title">✍️ Applied</div>
-      <div class="jobs" data-status="applied"></div>
-      <div class="empty">Drag jobs here</div>
-    </div>
-
-    <div class="column">
-      <div class="column-title">💬 Interview</div>
-      <div class="jobs" data-status="interview"></div>
-      <div class="empty">Drag jobs here</div>
-    </div>
-
-    <div class="column">
-      <div class="column-title">🎉 Offer</div>
-      <div class="jobs" data-status="offer"></div>
-      <div class="empty">Drag jobs here</div>
-    </div>
-
-    <div class="column">
-      <div class="column-title">❌ Rejected</div>
-      <div class="jobs" data-status="rejected"></div>
-      <div class="empty">Drag jobs here</div>
-    </div>
-  </div>
-
-  <div class="stats">
-    <div class="stat">
-      <div class="stat-value" id="total">0</div>
-      <div class="stat-label">Total Jobs</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value" id="applied">0</div>
-      <div class="stat-label">Applied</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value" id="interviews">0</div>
-      <div class="stat-label">Interviews</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value" id="offers">0</div>
-      <div class="stat-label">Offers</div>
-    </div>
-  </div>
-</div>
-
-<script>
   async function loadAndRenderJobs() {
     let jobs = [];
 
@@ -364,39 +315,6 @@
 
     // Update stats
     updateStats(jobs);
-  }
-
-  async function saveJobToFirestore(job) {
-    if (!db) return false;
-    try {
-      if (job.id && !job.id.startsWith("local_")) {
-        await db.collection("jobs").doc(job.id).set(job);
-      } else {
-        await db.collection("jobs").add(job);
-      }
-      return true;
-    } catch (e) {
-      console.error("[JobBoard] Firestore save error:", e);
-      return false;
-    }
-  }
-
-  async function updateJobStatusInFirestore(jobId, newStatus) {
-    if (!db) return;
-    try {
-      await db.collection("jobs").doc(jobId).update({ status: newStatus });
-    } catch (e) {
-      console.warn("[JobBoard] Failed to update Firestore:", e);
-    }
-  }
-
-  async function deleteJobFromFirestore(jobId) {
-    if (!db) return;
-    try {
-      await db.collection("jobs").doc(jobId).delete();
-    } catch (e) {
-      console.warn("[JobBoard] Failed to delete from Firestore:", e);
-    }
   }
 
   function renderJob(job) {
@@ -450,16 +368,6 @@
     document.getElementById("offers").textContent = jobs.filter(j => j.status === "offer").length;
   }
 
-  // Normalize job data: ensure 'role' field exists (fallback to 'title' for old jobs)
-  function normalizeJobs(jobs) {
-    return jobs.map(job => {
-      if (!job.role && job.title) {
-        job.role = job.title;
-      }
-      return job;
-    });
-  }
-
   // Handle drag over
   document.querySelectorAll(".jobs").forEach(col => {
     col.addEventListener("dragover", (e) => {
@@ -495,6 +403,15 @@
       }
     });
   });
+
+  async function updateJobStatusInFirestore(jobId, newStatus) {
+    if (!db) return;
+    try {
+      await db.collection("jobs").doc(jobId).update({ status: newStatus });
+    } catch (e) {
+      console.warn("[JobBoard] Failed to update Firestore:", e);
+    }
+  }
 
   function exportJobs() {
     const jobs = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
@@ -611,9 +528,7 @@
         try {
           const snapshot = await db.collection("jobs").get();
           const batch = db.batch();
-          snapshot.docs.forEach(doc => {
-            batch.delete(doc.ref);
-          });
+          snapshot.docs.forEach(doc => batch.delete(doc.ref));
           await batch.commit();
         } catch (e) {
           console.warn("[JobBoard] Failed to clear Firestore:", e);
@@ -623,14 +538,71 @@
       loadAndRenderJobs();
     }
   }
-
-  // Load and render jobs on page load
-  document.addEventListener("DOMContentLoaded", () => {
-    loadAndRenderJobs();
-    // Refresh every 2 seconds to catch updates from the extension
-    setInterval(loadAndRenderJobs, 2000);
-  });
 </script>
+
+<div class="container">
+  <h1>JobBoard Tracker</h1>
+  <p class="subtitle">Drag jobs between columns to update their status</p>
+
+  <div class="controls">
+    <button onclick="exportJobs()">📥 Export as JSON</button>
+    <input type="file" id="import-input" style="display: none;" onchange="importJobs(event)">
+    <button onclick="document.getElementById('import-input').click()">📤 Import from JSON</button>
+    <button class="btn-secondary" onclick="clearAllJobs()">🗑️ Clear All</button>
+    <button class="btn-secondary" onclick="syncLocalStorageToFirestore()">☁️ Sync to Cloud</button>
+  </div>
+
+  <div class="board">
+    <div class="column">
+      <div class="column-title">⭐ Wishlist</div>
+      <div class="jobs" data-status="wishlist"></div>
+      <div class="empty">Drag jobs here</div>
+    </div>
+
+    <div class="column">
+      <div class="column-title">✍️ Applied</div>
+      <div class="jobs" data-status="applied"></div>
+      <div class="empty">Drag jobs here</div>
+    </div>
+
+    <div class="column">
+      <div class="column-title">💬 Interview</div>
+      <div class="jobs" data-status="interview"></div>
+      <div class="empty">Drag jobs here</div>
+    </div>
+
+    <div class="column">
+      <div class="column-title">🎉 Offer</div>
+      <div class="jobs" data-status="offer"></div>
+      <div class="empty">Drag jobs here</div>
+    </div>
+
+    <div class="column">
+      <div class="column-title">❌ Rejected</div>
+      <div class="jobs" data-status="rejected"></div>
+      <div class="empty">Drag jobs here</div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-value" id="total">0</div>
+      <div class="stat-label">Total Jobs</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="applied">0</div>
+      <div class="stat-label">Applied</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="interviews">0</div>
+      <div class="stat-label">Interviews</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="offers">0</div>
+      <div class="stat-label">Offers</div>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
