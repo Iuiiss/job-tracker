@@ -63,6 +63,27 @@ document.getElementById("export-btn").addEventListener("click", () => {
   });
 });
 
+// ── Clear jobs button ──────────────────────────────────────────────────
+// Clear all saved jobs from both storage and Firestore
+document.getElementById("clear-btn").addEventListener("click", () => {
+  if (confirm("Delete all saved jobs? This cannot be undone.")) {
+    BrowserCompat.storageSet("jobtracker_jobs", []);
+    localStorage.removeItem("jobtracker_jobs");
+    
+    // Also clear Firestore
+    if (typeof db !== "undefined" && db) {
+      db.collection("jobs").get().then(snapshot => {
+        const batch = db.batch();
+        snapshot.forEach(doc => batch.delete(doc.ref));
+        return batch.commit();
+      }).catch(e => console.warn("[JobBoard] Failed to clear Firestore:", e));
+    }
+    
+    // Reload to show cleared state
+    location.reload();
+  }
+});
+
 function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
