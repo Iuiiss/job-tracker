@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    width: 300px;
+    background: #0f1117;
+    color: #e2e8f0;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    padding: 20px;
+  }
+
+  .brand {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin-bottom: 4px;
+  }
+  .brand span { color: #7c8dff; }
+  .subtitle {
+    font-size: 0.75rem;
+    color: #8892b0;
+    margin-bottom: 18px;
+  }
+
+  .section-title {
+    font-size: 0.72rem;
+    color: #8892b0;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+  }
+
+  /* ── Stat row ── */
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .stat {
+    background: #1a1d27;
+    border: 1px solid #2e3350;
+    border-radius: 8px;
+    padding: 10px 8px;
+    text-align: center;
+  }
+  .stat-val {
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+  .stat-label { font-size: 0.65rem; color: #8892b0; margin-top: 2px; }
+
+  /* ── Recent jobs ── */
+  .jobs-list { margin-bottom: 16px; }
+  .job-item {
+    background: #1a1d27;
+    border: 1px solid #2e3350;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+  .job-company { font-size: 0.82rem; font-weight: 600; }
+  .job-role { font-size: 0.75rem; color: #8892b0; }
+  .job-status {
+    display: inline-block;
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-top: 5px;
+  }
+
+  .status-wishlist  { background: rgba(124,141,255,0.15); color: #7c8dff; }
+  .status-applied   { background: rgba(56,189,248,0.15);  color: #38bdf8; }
+  .status-interview { background: rgba(245,158,11,0.15);  color: #f59e0b; }
+  .status-offer     { background: rgba(52,211,153,0.15);  color: #34d399; }
+  .status-rejected  { background: rgba(248,113,113,0.15); color: #f87171; }
+
+  .empty {
+    text-align: center;
+    color: #8892b0;
+    font-size: 0.8rem;
+    padding: 20px 0;
+  }
+
+  .open-btn {
+    width: 100%;
+    background: #7c8dff;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .open-btn:hover { opacity: 0.85; }
+
+  .hint {
+    font-size: 0.7rem;
+    color: #8892b0;
+    text-align: center;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="brand">Job<span>Board</span></div>
+<div class="subtitle">Your job application tracker</div>
+
+<div class="section-title">Overview</div>
+<div class="stats">
+  <div class="stat">
+    <div class="stat-val" id="stat-total">0</div>
+    <div class="stat-label">Total</div>
+  </div>
+  <div class="stat">
+    <div class="stat-val" style="color:#f59e0b" id="stat-interviews">0</div>
+    <div class="stat-label">Interviews</div>
+  </div>
+  <div class="stat">
+    <div class="stat-val" style="color:#34d399" id="stat-offers">0</div>
+    <div class="stat-label">Offers</div>
+  </div>
+</div>
+
+<div class="section-title">Recently Saved</div>
+<div class="jobs-list" id="jobs-list">
+  <div class="empty">No jobs saved yet.<br>Visit LinkedIn or Indeed to get started.</div>
+</div>
+
+<button class="open-btn" id="open-btn">Open Full Tracker</button>
+<div class="hint" id="hint-text">Open your index.html file to see the full Kanban board.</div>
+
+<script src="browser-compat.js"></script>
+<script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "JobBoard Saver",
+  "version": "1.0",
+  "description": "Save jobs from LinkedIn and Indeed directly to your JobBoard tracker.",
+
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+
+  "host_permissions": [
+    "https://www.linkedin.com/*",
+    "https://www.indeed.com/*"
+  ],
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
+  },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.linkedin.com/jobs/*",
+        "https://www.indeed.com/viewjob*",
+        "https://www.indeed.com/jobs*"
+      ],
+      "js": ["browser-compat.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
