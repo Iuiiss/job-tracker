@@ -47,6 +47,22 @@ document.getElementById("open-btn").addEventListener("click", () => {
   BrowserCompat.openTab(trackerUrl);
 });
 
+// ── Export jobs button ──────────────────────────────────────────────────
+// Export all saved jobs as a JSON file that can be imported into the tracker
+document.getElementById("export-btn").addEventListener("click", () => {
+  BrowserCompat.storageGet("jobtracker_jobs", (jobs) => {
+    jobs = jobs || [];
+    const dataStr = JSON.stringify(jobs, null, 2);
+    const dataBlob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `jobboard-export-${new Date().toISOString().split("T")[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  });
+});
+
 function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }

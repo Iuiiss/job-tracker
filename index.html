@@ -233,6 +233,8 @@
 
   <div class="controls">
     <button onclick="exportJobs()">📥 Export as JSON</button>
+    <input type="file" id="import-input" style="display: none;" onchange="importJobs(event)">
+    <button onclick="document.getElementById('import-input').click()">📤 Import from JSON</button>
     <button class="btn-secondary" onclick="clearAllJobs()">🗑️ Clear All</button>
   </div>
 
@@ -401,6 +403,39 @@
     link.download = `jobboard-${new Date().toISOString().split("T")[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
+  }
+
+  function importJobs(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const jobs = JSON.parse(e.target.result);
+        if (!Array.isArray(jobs)) {
+          alert("Invalid format! File must contain a JSON array of jobs.");
+          return;
+        }
+        
+        // Merge with existing jobs (avoid duplicates by link)
+        const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        const existingLinks = new Set(existing.map(j => j.link));
+        
+        const newJobs = jobs.filter(j => !existingLinks.has(j.link));
+        const merged = [...existing, ...newJobs];
+        
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+        loadAndRenderJobs();
+        alert(`Imported ${newJobs.length} new jobs!`);
+      } catch (error) {
+        alert("Error importing file: " + error.message);
+      }
+    };
+    reader.readAsText(file);
+    
+    // Reset file input so same file can be imported again
+    event.target.value = "";
   }
 
   function clearAllJobs() {
