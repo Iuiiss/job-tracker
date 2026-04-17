@@ -266,6 +266,7 @@
     <input type="file" id="import-input" style="display: none;" onchange="importJobs(event)">
     <button onclick="document.getElementById('import-input').click()">📤 Import from JSON</button>
     <button class="btn-secondary" onclick="clearAllJobs()">🗑️ Clear All</button>
+    <button class="btn-secondary" onclick="syncLocalStorageToFirestore()">☁️ Sync to Cloud</button>
   </div>
 
   <div class="board">
@@ -546,6 +547,59 @@
     
     // Reset file input so same file can be imported again
     event.target.value = "";
+  }
+
+  async function syncLocalStorageToFirestore() {
+    if (!db) {
+      alert("Firebase not initialized. Check console for errors.");
+      return;
+    }
+    
+    const localJobs = normalizeJobs(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"));
+    
+    if (localJobs.length === 0) {
+      alert("No jobs in localStorage to sync.");
+      return;
+    }
+    
+    // Get existing Firestore jobs to check for duplicates by link
+    const existingSnapshot = await db.collection("jobs").get();
+    const existingLinks = new Set(
+      existingSnapshot.docs.map(doc => doc.data().link).filter(Boolean)
+    );
+    
+    let successCount = 0;
+    let skippedCount = 0;
+    let failCount = 0;
+    
+    for (const job of localJobs) {
+      try {
+        if (job.link && existingLinks.has(job.link)) {
+          console.log("[JobBoard] Skipping duplicate:", job.link);
+          skippedCount++;
+          continue;
+        }
+        
+        // Generate new Firestore ID (don't reuse localStorage ID)
+        const docRef = await db.collection("jobs").add(job);
+        console.log("[JobBoard] Synced job with new ID:", docRef.id);
+        successCount++;
+      } catch (e) {
+        console.error("[JobBoard] Failed to sync job:", job.id || job.link, e);
+        failCount++;
+      }
+    }
+    
+    // Refresh from Firestore
+    await loadAndRenderJobs();
+    
+    const confirmed = confirm(`Sync complete!\n✓ ${successCount} jobs uploaded to cloud\n⏭️ ${skippedCount} duplicates skipped\n✗ ${failCount} failed\n\nClear localStorage now?`);
+    
+    if (confirmed) {
+      localStorage.clear();
+      await loadAndRenderJobs();
+      alert("localStorage cleared! Your jobs are now synced with Firebase.");
+    }
   }
 
   async function clearAllJobs() {
