@@ -67,20 +67,23 @@ document.getElementById("export-btn").addEventListener("click", () => {
 // Clear all saved jobs from both storage and Firestore
 document.getElementById("clear-btn").addEventListener("click", () => {
   if (confirm("Delete all saved jobs? This cannot be undone.")) {
-    BrowserCompat.storageSet("jobtracker_jobs", []);
-    localStorage.removeItem("jobtracker_jobs");
-    
-    // Also clear Firestore
-    if (typeof db !== "undefined" && db) {
-      db.collection("jobs").get().then(snapshot => {
-        const batch = db.batch();
-        snapshot.forEach(doc => batch.delete(doc.ref));
-        return batch.commit();
-      }).catch(e => console.warn("[JobBoard] Failed to clear Firestore:", e));
-    }
-    
-    // Reload to show cleared state
-    location.reload();
+    // Clear both storage systems
+    BrowserCompat.storageSet("jobtracker_jobs", [], () => {
+      localStorage.removeItem("jobtracker_jobs");
+      
+      // Also clear Firestore
+      BrowserCompat.firestoreClearAll(() => {
+        console.log("[JobBoard] Firestore clear complete");
+      });
+      
+      // Update UI directly to show cleared state
+      document.getElementById("stat-total").textContent = "0";
+      document.getElementById("stat-interviews").textContent = "0";
+      document.getElementById("stat-offers").textContent = "0";
+      
+      const list = document.getElementById("jobs-list");
+      list.innerHTML = '<div class="empty">No jobs saved yet.<br>Visit LinkedIn or Indeed to get started.</div>';
+    });
   }
 });
 

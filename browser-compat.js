@@ -156,6 +156,31 @@ const BrowserCompat = (() => {
         });
     },
 
+    /**
+     * Clear all jobs from Firestore.
+     */
+    firestoreClearAll: (callback) => {
+      if (!db) {
+        console.warn("[JobBoard] Firestore not available");
+        if (callback) callback(false);
+        return;
+      }
+      db.collection("jobs").get()
+        .then(snapshot => {
+          const batch = db.batch();
+          snapshot.forEach(doc => batch.delete(doc.ref));
+          return batch.commit();
+        })
+        .then(() => {
+          console.log("[JobBoard] Cleared all jobs from Firestore");
+          if (callback) callback(true);
+        })
+        .catch((error) => {
+          console.error("[JobBoard] Clear all error:", error);
+          if (callback) callback(false);
+        });
+    },
+
     openTab: (url) => {
       if (browser === "chrome") {
         chrome.tabs.create({ url: url });
