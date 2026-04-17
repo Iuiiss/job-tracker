@@ -231,6 +231,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <script>
+  const STORAGE_KEY = "jobtracker_jobs";
+  let draggedJob = null;
+
   // Firebase configuration
   const firebaseConfig = {
     apiKey: "AIzaSyCvJl9E6FvzqlO-r0eoIH_tZ38u-uRQ8II",
@@ -318,38 +321,6 @@
 </div>
 
 <script>
-  const STORAGE_KEY = "jobtracker_jobs";
-  let draggedJob = null;
-
-  // Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyCvJl9E6FvzqlO-r0eoIH_tZ38u-uRQ8II",
-    authDomain: "job-tracker-a4481.firebaseapp.com",
-    projectId: "job-tracker-a4481",
-    storageBucket: "job-tracker-a4481.firebasestorage.app",
-    messagingSenderId: "706534879668",
-    appId: "1:706534879668:web:1fedadee20b36ae44882e1"
-  };
-
-  // Initialize Firebase
-  let db = null;
-  try {
-    if (firebase.apps.length === 0) {
-      firebase.initializeApp(firebaseConfig);
-    }
-    db = firebase.firestore();
-    console.log("[JobBoard] Firestore initialized");
-  } catch (e) {
-    console.warn("[JobBoard] Firestore init failed:", e);
-  }
-
-  // Load and render jobs on page load
-  document.addEventListener("DOMContentLoaded", () => {
-    loadAndRenderJobs();
-    // Refresh every 2 seconds to catch updates from the extension
-    setInterval(loadAndRenderJobs, 2000);
-  });
-
   async function loadAndRenderJobs() {
     let jobs = [];
 
@@ -387,10 +358,8 @@
     if (!db) return false;
     try {
       if (job.id && !job.id.startsWith("local_")) {
-        // Update existing
         await db.collection("jobs").doc(job.id).set(job);
       } else {
-        // Add new
         await db.collection("jobs").add(job);
       }
       return true;
@@ -571,6 +540,13 @@
       loadAndRenderJobs();
     }
   }
+
+  // Load and render jobs on page load
+  document.addEventListener("DOMContentLoaded", () => {
+    loadAndRenderJobs();
+    // Refresh every 2 seconds to catch updates from the extension
+    setInterval(loadAndRenderJobs, 2000);
+  });
 </script>
 
 </body>
